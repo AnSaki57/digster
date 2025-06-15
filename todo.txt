@@ -1,0 +1,15 @@
+Version 1 Todo:
+
+- //Prevent player from mining outside mining spots
+- //Add grass, pickaxe textures
+- //Make mining more interactive (pickaxe changes sprites, block flashes (unneeded), has purple border on hover)
+- //Restrict treasure availability to some minimum depth for each treasure
+- Add counts of treasure mined, make title screen and improve UI
+
+Version 2.0:
+
+- Add an exp and leveling system
+- Add damage shielding
+- Add locked spots, unlocking costing money (and a certain threshold level)
+- Add item upgrades, shop
+- Get a better cursor
