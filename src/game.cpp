@@ -4,6 +4,8 @@
 
 void game::initialise() {
     // Initialise Raylib window, set configs
+	const int frameRate = 30;
+	SetTargetFPS(frameRate);
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
     SearchAndSetResourceDir("resources");
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Digster Ver 1.0");
@@ -15,12 +17,12 @@ void game::initialise() {
 
     // Initialise non-vector attributes
     amt = 0;
-    resources.resize(5, 0);
+    resources.resize(TREASURE_COUNT, 0);
     frame = 0;
     mineStrength = 50;
     fadeouts.resize(0);
     spotTextures.resize(SPOT_TEXTURES_COUNT);
-    cursorTextures.resize(3);
+    cursorTextures.resize(CURSOR_TEXTURES_COUNT);
 
     // Load background
     Image bg = LoadImage("Background3.png");
@@ -30,68 +32,52 @@ void game::initialise() {
     
     // Load soil textures (all 9)
     Image spotTextureSprites = LoadImage("EarthSprites4.png");
-            
-    Image currSprite = ImageCopy(spotTextureSprites);
-    ImageCrop(&currSprite, {50, 322, 256, 256});
-    ImageResize(&currSprite, SPOT_SIZE-2*SPOT_BORDER_THICKNESS, SPOT_SIZE-2*SPOT_BORDER_THICKNESS);
-    spotTextures[0] = LoadTextureFromImage(currSprite);
 
-    currSprite = ImageCopy(spotTextureSprites);
-    ImageCrop(&currSprite, {380, 322, 256, 256});
-    ImageResize(&currSprite, SPOT_SIZE-2*SPOT_BORDER_THICKNESS, SPOT_SIZE-2*SPOT_BORDER_THICKNESS);
-    spotTextures[1] = LoadTextureFromImage(currSprite);
+    static const std::vector<Rectangle> SpotTextureCrops = {
+        {50, 322,256,256},
+        {380,322,256,256},
+        {700,322,256,256},
+        {50 ,650,256,256},
+        {380,650,256,256},
+        {700,650,256,256},
+        {50 ,960,256,256},
+        {380,960,256,256},
+        {700,960,256,256}
+    };
 
-    currSprite = ImageCopy(spotTextureSprites);
-    ImageCrop(&currSprite, {700, 322, 256, 256});
-    ImageResize(&currSprite, SPOT_SIZE-2*SPOT_BORDER_THICKNESS, SPOT_SIZE-2*SPOT_BORDER_THICKNESS);
-    spotTextures[2] = LoadTextureFromImage(currSprite);
-
-    currSprite = ImageCopy(spotTextureSprites);
-    ImageCrop(&currSprite, {50, 650, 256, 256});
-    ImageResize(&currSprite, SPOT_SIZE-2*SPOT_BORDER_THICKNESS, SPOT_SIZE-2*SPOT_BORDER_THICKNESS);
-    spotTextures[3] = LoadTextureFromImage(currSprite);
-
-    currSprite = ImageCopy(spotTextureSprites);
-    ImageCrop(&currSprite, {380, 650, 256, 256});
-    ImageResize(&currSprite, SPOT_SIZE-2*SPOT_BORDER_THICKNESS, SPOT_SIZE-2*SPOT_BORDER_THICKNESS);
-    spotTextures[4] = LoadTextureFromImage(currSprite);
-
-    currSprite = ImageCopy(spotTextureSprites);
-    ImageCrop(&currSprite, {700, 650, 256, 256});
-    ImageResize(&currSprite, SPOT_SIZE-2*SPOT_BORDER_THICKNESS, SPOT_SIZE-2*SPOT_BORDER_THICKNESS);
-    spotTextures[5] = LoadTextureFromImage(currSprite);
-
-    currSprite = ImageCopy(spotTextureSprites);
-    ImageCrop(&currSprite, {50, 960, 256, 256});
-    ImageResize(&currSprite, SPOT_SIZE-2*SPOT_BORDER_THICKNESS, SPOT_SIZE-2*SPOT_BORDER_THICKNESS);
-    spotTextures[6] = LoadTextureFromImage(currSprite);
-
-    currSprite = ImageCopy(spotTextureSprites);
-    ImageCrop(&currSprite, {380, 960, 256, 256});
-    ImageResize(&currSprite, SPOT_SIZE-2*SPOT_BORDER_THICKNESS, SPOT_SIZE-2*SPOT_BORDER_THICKNESS);
-    spotTextures[7] = LoadTextureFromImage(currSprite);
-
-    currSprite = ImageCopy(spotTextureSprites);
-    ImageCrop(&currSprite, {700, 960, 256, 256});
-    ImageResize(&currSprite, SPOT_SIZE-2*SPOT_BORDER_THICKNESS, SPOT_SIZE-2*SPOT_BORDER_THICKNESS);
-    spotTextures[8] = LoadTextureFromImage(currSprite);
-
+    Image currSprite;
+    for (int i = 0; i < SPOT_TEXTURES_COUNT; i++) {
+        currSprite = ImageCopy(spotTextureSprites);
+        ImageCrop(&currSprite, SpotTextureCrops[i]);
+        ImageResize(&currSprite, SPOT_SIZE-2*SPOT_BORDER_THICKNESS, SPOT_SIZE-2*SPOT_BORDER_THICKNESS);
+        spotTextures[i] = LoadTextureFromImage(currSprite);
+    }
     
     // Load cursor textures (plain cursor, pickaxe upright and striking)
     HideCursor();
-    currSprite = LoadImage("Sprites.png");   
-    ImageCrop(&currSprite, {0,0,512,512});
-    ImageResize(&currSprite, 32, 32);
-    cursorTextures[0] = LoadTextureFromImage(currSprite);
+    
+    static const std::vector<Rectangle> cursorCrop = {
+        {0  ,0  ,512,512 },
+        {90 ,180,800,1200},
+        {90 ,180,800,1200}
+    };
+    static const std::vector<Vector2> cursorResize = {
+        {32,32},
+        {64,96},
+        {64,96}
+    };
+    static const std::vector<std::string> cursorFileName = {
+        "Sprites.png",
+        "PickaxeUpright.png",
+        "PickaxeStriking.png"
+    };
 
-    currSprite = LoadImage("PickaxeUpright.png");   
-    ImageCrop(&currSprite, {90,180,800,1200});
-    ImageResize(&currSprite, 64, 96);
-    cursorTextures[1] = LoadTextureFromImage(currSprite);
-
-    currSprite = LoadImage("PickaxeStriking.png");   
-    ImageResize(&currSprite, 64, 96);
-    cursorTextures[2] = LoadTextureFromImage(currSprite);
+    for (int i = 0; i < CURSOR_TEXTURES_COUNT; i++) {
+        currSprite = LoadImage(cursorFileName[i].c_str());   
+        ImageCrop(&currSprite, cursorCrop[i]);
+        ImageResize(&currSprite, cursorResize[i].x, cursorResize[i].y);
+        cursorTextures[i] = LoadTextureFromImage(currSprite);
+    }
 
     UnloadImage(currSprite);
     UnloadImage(spotTextureSprites);
@@ -103,7 +89,6 @@ void game::initialise() {
         for (int j = 0; j < SPOT_COLS; j++) {
             spots[i*SPOT_ROWS+j].initialise({(float)GRID_BEGIN_X+i*SPOT_SIZE,(float)GRID_BEGIN_Y+j*SPOT_SIZE}, spotTextures[dist(gen)]);
         }
-        std::cout << "\n";
     }
 
     // Set the default fonts for stuff
@@ -202,7 +187,6 @@ void game::frameProcess() {
 
     // Periodically unhighlight all spots
     if (frame%8==0) {
-        //std::cout << TextLength("oaure");
         for (auto& spot : spots) spot.cursorState=0;
     }
 
@@ -222,7 +206,7 @@ void game::getShadow(int i) {
 
 void game::draw() {
     // Background and grid border
-    DrawTexture(background, GRID_BEGIN_X-410, GRID_BEGIN_Y-395, WHITE);
+    DrawTexture(background, GRID_BEGIN_X-410, GRID_BEGIN_Y-395, WHITE); // Background is fixed with respect to the grid (because the digout is a part of the background image as well)
     DrawRectangleLinesEx({GRID_BEGIN_X-SPOT_BORDER_THICKNESS, GRID_BEGIN_Y-SPOT_BORDER_THICKNESS, SPOT_COLS*SPOT_SIZE+2*SPOT_BORDER_THICKNESS, SPOT_ROWS*SPOT_SIZE+2*SPOT_BORDER_THICKNESS}, SPOT_BORDER_THICKNESS, BLACK);
     
     // Title card
@@ -231,24 +215,24 @@ void game::draw() {
     const float titleBoxWidth = WINDOW_WIDTH-2*titleBoxBegin.x;
     const int titleFontSize = 150;
     const int titleBoxBuffer = 20;
-    DrawRectangle(titleBoxBegin.x, titleBoxBegin.y, titleBoxWidth, titleFontSize+2*titleBoxBuffer, {200,9,224, 200});
-    DrawRectangleLinesEx({titleBoxBegin.x, titleBoxBegin.y, titleBoxWidth, titleFontSize+2*titleBoxBuffer}, 3, {200,90,224, 255});
-    DrawTextEx(titleFont, title.c_str(), {(float)(WINDOW_WIDTH-MeasureTextEx(titleFont, title.c_str(), titleFontSize, 0).x)/2, titleBoxBegin.y+titleBoxBuffer}, titleFontSize, 0, GREEN);
+    DrawRectangle(titleBoxBegin.x, titleBoxBegin.y, titleBoxWidth, titleFontSize+2*titleBoxBuffer, BOX_FILL_COLOUR);
+    DrawRectangleLinesEx({titleBoxBegin.x, titleBoxBegin.y, titleBoxWidth, titleFontSize+2*titleBoxBuffer}, 3, BOX_BORDER_COLOUR);
+    DrawTextEx(titleFont, title.c_str(), {(float)(WINDOW_WIDTH-MeasureTextEx(titleFont, title.c_str(), titleFontSize, 0).x)/2, titleBoxBegin.y+titleBoxBuffer}, titleFontSize, 0, BOX_TEXT_COLOUR);
     
     // Resource-count rectangle
     const int rightBoxBuffer = (WINDOW_WIDTH-GRID_BEGIN_X-SPOT_COLS*SPOT_SIZE-RIGHT_BOX_WIDTH)/2;
     const int rightBoxBegin = GRID_BEGIN_X+SPOT_COLS*SPOT_SIZE+rightBoxBuffer;
-    DrawRectangle(rightBoxBegin, GRID_BEGIN_Y, RIGHT_BOX_WIDTH, 7*SPOT_SIZE, {200,9,224, 200});
-    DrawRectangleLinesEx({rightBoxBegin, GRID_BEGIN_Y, RIGHT_BOX_WIDTH, 7*SPOT_SIZE}, 3, {200,90,224, 255});
+    DrawRectangle(rightBoxBegin, GRID_BEGIN_Y, RIGHT_BOX_WIDTH, 7*SPOT_SIZE, BOX_FILL_COLOUR);
+    DrawRectangleLinesEx({rightBoxBegin, GRID_BEGIN_Y, RIGHT_BOX_WIDTH, 7*SPOT_SIZE}, 3, BOX_BORDER_COLOUR);
     
     // Draw amount possessed in resource-count rectangle
-    DrawText(("  " + std::to_string(amt)).c_str(), rightBoxBegin+BUFFER_GRID_AMOUNT, GRID_BEGIN_Y+BUFFER_GRID_AMOUNT, AMOUNT_FONT_SIZE, GREEN);
-    DrawText("$", rightBoxBegin+BUFFER_GRID_AMOUNT, GRID_BEGIN_Y+BUFFER_GRID_AMOUNT, AMOUNT_FONT_SIZE, GREEN);
+    DrawText(("  " + std::to_string(amt)).c_str(), rightBoxBegin+BUFFER_GRID_AMOUNT, GRID_BEGIN_Y+BUFFER_GRID_AMOUNT, AMOUNT_FONT_SIZE, BOX_TEXT_COLOUR);
+    DrawText("$", rightBoxBegin+BUFFER_GRID_AMOUNT, GRID_BEGIN_Y+BUFFER_GRID_AMOUNT, AMOUNT_FONT_SIZE, BOX_TEXT_COLOUR);
     
-    for (int i = 0; i < 5; i++) DrawText(("  " + std::to_string(resources[i])).c_str(), rightBoxBegin+BUFFER_GRID_AMOUNT, GRID_BEGIN_Y+BUFFER_GRID_AMOUNT+(i+1)*(AMOUNT_FONT_SIZE+BUFFER_GRID_AMOUNT), AMOUNT_FONT_SIZE, GREEN);
+    for (int i = 0; i < TREASURE_COUNT; i++) DrawText(("  " + std::to_string(resources[i])).c_str(), rightBoxBegin+BUFFER_GRID_AMOUNT, GRID_BEGIN_Y+BUFFER_GRID_AMOUNT+(i+1)*(AMOUNT_FONT_SIZE+BUFFER_GRID_AMOUNT), AMOUNT_FONT_SIZE, BOX_TEXT_COLOUR);
     treasure treasResrcDraw;
     treasResrcDraw.posn = {rightBoxBegin+BUFFER_GRID_AMOUNT, GRID_BEGIN_Y+BUFFER_GRID_AMOUNT+7};
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < TREASURE_COUNT; i++) {
         treasResrcDraw.initialise(i+1);
         treasResrcDraw.posn.y+=AMOUNT_FONT_SIZE+BUFFER_GRID_AMOUNT;
         treasResrcDraw.draw();

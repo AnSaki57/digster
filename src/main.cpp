@@ -1,9 +1,6 @@
 #include "game.hpp"
 
 int main () {
-	const int frameRate = 30;
-	SetTargetFPS(frameRate);
-	
 	game Game;
 	Game.initialise();
 
